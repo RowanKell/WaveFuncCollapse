@@ -10,15 +10,25 @@ pygame.init()
 
 tile_image_list = ["Tiles/blank.png", "Tiles/up.png", "Tiles/right.png", "Tiles/down.png", "Tiles/left.png"]
 
-screen_width = 800
-screen_height = 800
+screen_width = 1200
+screen_height = 1000
 global screen
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 #Values for adjusting how many tiles we want on screen
-tile_width_num = 2
-radius = 4
-tile_height_num = 2
+radius = 12
+BLANK = 0
+UP = 1
+RIGHT = 2
+DOWN = 3
+LEFT = 4
+
+
+class Space(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Space, self).__init__()
+        self.collapsed = False
+        self.options: [BLANK, UP, RIGHT, DOWN, LEFT]
 
 
 class Tile(pygame.sprite.Sprite):
@@ -40,7 +50,7 @@ class Tile(pygame.sprite.Sprite):
 
 def tile_centering():
     center_of_tile_radius = radius * 2
-    odds = [0] * 4
+    odds = [0] * radius
     dimensions = [[(0, 0) for x in range(radius)] for x in range(radius)]
     for i in range(len(odds)):
         odds[i] = 2 * i + 1
@@ -65,11 +75,11 @@ while running:
         elif event.type == QUIT:
             running = False
     tileset = [["tile%d" % x for x in range(radius)] for x in range(radius)]
-    for i in range(len(tileset)):
-        for tile in tileset[i]:
-            tile_index = tileset[i].index(tile)
-            tile = Tile(tile_index % 4)
-            tile_center = tile_centering()[i][tile_index]
+    for index in range(len(tileset)):
+        for tile in tileset[index]:
+            tile_index = tileset[index].index(tile)
+            tile = Tile(tile_index % 5)
+            tile_center = tile_centering()[index][tile_index]
             tile.position(tile_center)
             tile.show()
     pygame.display.flip()

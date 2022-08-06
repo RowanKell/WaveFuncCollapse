@@ -11,7 +11,7 @@ pygame.init()
 tile_image_list = ["Tiles/blank.png", "Tiles/up.png", "Tiles/right.png", "Tiles/down.png", "Tiles/left.png"]
 
 screen_width = 800
-screen_height = 600
+screen_height = 800
 global screen
 screen = pygame.display.set_mode((screen_width, screen_height))
 
@@ -46,7 +46,7 @@ def tile_centering():
         odds[i] = 2 * i + 1
     for i in range(radius):
         for j in range(radius):
-            dimensions[i][j] = (screen_width * odds[i] / radius, screen_height * odds[j] / center_of_tile_radius)
+            dimensions[i][j] = (screen_width * odds[i] / center_of_tile_radius, screen_height * odds[j] / center_of_tile_radius)
     return dimensions
 
 
@@ -65,9 +65,15 @@ while running:
         elif event.type == QUIT:
             running = False
     tileset = [["tile%d" % x for x in range(radius)] for x in range(radius)]
-    tile = Tile(3)
-    tile_center = tile_centering()[2][1]
-    tile.position(tile_center)
-    tile.show()
+    for i in range(len(tileset)):
+        print(i)
+        for tile in tileset[i]:
+            tile_index = tileset[i].index(tile)
+            tile = Tile(tile_index % 4)
+            tile_center = tile_centering()[i][tile_index]
+            tile.position(tile_center)
+            tile.show()
     pygame.display.flip()
 pygame.quit()
+
+print(tile_centering())

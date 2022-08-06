@@ -65,18 +65,12 @@ while running:
         elif event.type == QUIT:
             running = False
     tileset = [["tile%d" % x for x in range(radius)] for x in range(radius)]
-#    tileset = ["tile%d" % x for x in range(radius * radius)]
-    for tile_list in tileset:
-        tile_list_index = tileset.index(tile_list)
-        for tile in tile_list:
-            tile_index = tile_list.index(tile)
+    for i in range(len(tileset)):
+        for tile in tileset[i]:
+            tile_index = tileset[i].index(tile)
             tile = Tile(tile_index % 4)
-            tile_center = tile_centering()[tile_list_index][tile_index]
+            tile_center = tile_centering()[i][tile_index]
             tile.position(tile_center)
             tile.show()
-            print(tile_list_index, tile_index)
     pygame.display.flip()
-    running = False
 pygame.quit()
-
-print(tile_centering())

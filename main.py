@@ -18,16 +18,18 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 #Values for adjusting how many tiles we want on screen
 radius = 5
 BLANK = 0
-UP = 1
-RIGHT = 2
-DOWN = 3
-LEFT = 4
+LEFT = 1
+UP = 2
+RIGHT = 3
+DOWN = 4
 
 
-options_list = [BLANK, LEFT, UP, RIGHT, DOWN]
+options_list = [0, 1, 2, 3, 4]
 collapsed = False
 init_collapsed = False
 running = True
+
+collapse_loop_count = 0
 
 
 class Space(pygame.sprite.Sprite):
@@ -43,7 +45,7 @@ class Space(pygame.sprite.Sprite):
 
 tile_type_dict = {
         0: [0, 0, 0, 0],
-        1: [1, 1, 1, 0],
+        1: [1, 1, 0, 1],
         2: [1, 1, 1, 0],
         3: [0, 1, 1, 1],
         4: [1, 0, 1, 1]
@@ -94,7 +96,7 @@ def compare(_tile: Space, side_num):
     compatible_list = []
     for i in range(len(options_list)):
         #value is the 0 or 1 value of the input (collapsed) tile side
-        value = values[side_num - 1]
+        value = values[side_num]
         compare_tile = options_list[i]
         compare_values = tile_type_dict[compare_tile]
         compare_value = compare_values[compare_num]
@@ -113,47 +115,44 @@ def connecting(space_list):
         for j in range(radius):
             space = space_list[i][j]
             space.position = [i, j]
-            print("space position: ", space.position)
             #For spaces that have another space at top border
-            if j > 0:
-                test_left_space = space_list[i][j - 1]
-                test_left_space.position = [i, j - 1]
-                print("i and j: ", i, ", ", j)
-                print("i and j - 1: ", i, ", ", j - 1)
-                print("test left:", test_left_space.position)
+            if i > 0:
+                test_left_space = space_list[i - 1][j]
+                test_left_space.position = [i - 1, j]
                 if test_left_space.collapsed:
                     left_options = compare(test_left_space, 0)
+                    print("left collapsed at: ", test_left_space.position)
                 elif not test_left_space.collapsed:
                     left_options = options_list
             else:
                 left_options = options_list
             # For spaces that have another space at bottom border
-            if j < radius - 1:
-                test_right_space = space_list[i][j + 1]
-                test_right_space.position = [i, j + 1]
-                print("test right:", test_right_space.position)
+            if i < radius - 1:
+                test_right_space = space_list[i + 1][j]
+                test_right_space.position = [i + 1, j]
                 if test_right_space.collapsed:
                     right_options = compare(test_right_space, 2)
+                    print("right collapsed at: ", test_right_space.position)
                 elif not test_right_space.collapsed:
                     right_options = options_list
             else:
                 right_options = options_list
-            if i > 0:
-                test_up_space = space_list[i - 1][j]
-                test_up_space.position = [i - 1, j]
-                print("test up:", test_up_space.position)
+            if j > 0:
+                test_up_space = space_list[i][j - 1]
+                test_up_space.position = [i, j - 1]
                 if test_up_space.collapsed:
                     up_options = compare(test_up_space, 1)
+                    print("up collapsed at: ", test_up_space.position)
                 elif not test_up_space.collapsed:
                     up_options = options_list
             else:
                 up_options = options_list
-            if i < radius - 1:
-                test_down_space = space_list[i + 1][j]
-                test_down_space.position = [i + 1, j]
-                print("test down:", test_down_space.position)
+            if j < radius - 1:
+                test_down_space = space_list[i][j + 1]
+                test_down_space.position = [i, j + 1]
                 if test_down_space.collapsed:
                     down_options = compare(test_down_space, 3)
+                    print("down collapsed at: ", test_down_space.position)
                 elif not test_down_space.collapsed:
                     down_options = options_list
             else:
@@ -172,11 +171,16 @@ def collapsing(space_list):
         randi = random.randint(0, radius - 1)
         randj = random.randint(0, radius - 1)
         randk = random.randint(0, radius - 1)
+        print("intial: ", randi, ", ", randj)
         space_list[randi][randj].type = randk
         space_list[randi][randj].collapsed = True
         space_list[randi][randj].entropy = -1
         init_collapsed = True
-    entropy_list = [[len(options_list)] * radius] * radius
+    entropy_list = []
+    for i in range(radius):
+        entropy_list.append([])
+        for j in range(radius):
+            entropy_list[i].append(len(options_list))
 #    for space_row_index in range(len(space_list)):
 #        for space in space_list[space_row_index]:
 #            space_index = space_list[space_row_index].index(space)
@@ -214,19 +218,24 @@ def collapsing(space_list):
                 multiple_min_entropy_bool = True
             elif entropy > min_entropy[0]:
                 continue
+    print(entropy_list)
     if multiple_min_entropy_bool:
         min_amount = len(multiple_min_entropy_list)
         pick = random.randint(0, min_amount - 1)
         collapse_space = space_list[multiple_min_entropy_list[pick][0]][multiple_min_entropy_list[pick][1]]
+        print("position: ", multiple_min_entropy_list[pick][0], ", ", multiple_min_entropy_list[pick][1], "options: ", collapse_space.options)
+        print("min entropy: ", min_entropy[0])
     else:
         collapse_space = space_list[min_entropy[1]][min_entropy[2]]
+        print("collapse space position: ", min_entropy[1], ", ", min_entropy[2], "options: ", collapse_space.options)
+        print("min entropy: ", min_entropy[0])
     if len(collapse_space.options) > 1:
         pick = random.randint(0, len(collapse_space.options) - 1)
         collapse_tile = options_list[pick]
     elif len(collapse_space.options) == 0:
         restart()
     else:
-        collapse_tile = options_list[collapse_space.options]
+        collapse_tile = options_list[collapse_space.options[0]]
     collapse_space.collapsed = True
     collapse_space.type = collapse_tile
     all_collapsed = True
@@ -239,10 +248,12 @@ def collapsing(space_list):
                 break
         if not all_collapsed:
             break
-    if all_collapsed:
-        return
-    elif not all_collapsed:
-        collapsing(space_list)
+    global collapse_loop_count
+    collapse_loop_count +=1
+#    if all_collapsed or collapse_loop_count == 2:
+#        return
+    if not all_collapsed:
+       collapsing(space_list)
 
 
 #fill screen with black

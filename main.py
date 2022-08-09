@@ -25,6 +25,9 @@ LEFT = 4
 
 
 options_list = [BLANK, LEFT, UP, RIGHT, DOWN]
+collapsed = False
+init_collapsed = False
+running = True
 
 
 class Space(pygame.sprite.Sprite):
@@ -48,7 +51,10 @@ tile_type_dict = {
 class Tile(pygame.sprite.Sprite):
     def __init__(self, num):
         super(Tile, self).__init__()
-        self.surf = pygame.image.load(tile_image_list[num])
+        if num == None:
+            self.surf = pygame.image.load("Tiles/black.png")
+        else:
+            self.surf = pygame.image.load(tile_image_list[num])
         self.surf = pygame.transform.scale(self.surf, (
             screen_width / radius, screen_height / radius)
         )
@@ -98,16 +104,23 @@ def compare(_tile: Space, side_num):
 
 
 def connecting(space_list):
-    space_list[0][0].type = 0
-    space_list[0][0].collapsed = True
+    for i in range(radius):
+        for j in range(radius):
+            space = space_list[i][j]
+            space.options.clear()
 
     for i in range(radius):
         for j in range(radius):
             space = space_list[i][j]
             space.position = [i, j]
+            print("space position: ", space.position)
             #For spaces that have another space at top border
             if j > 0:
                 test_left_space = space_list[i][j - 1]
+                test_left_space.position = [i, j - 1]
+                print("i and j: ", i, ", ", j)
+                print("i and j - 1: ", i, ", ", j - 1)
+                print("test left:", test_left_space.position)
                 if test_left_space.collapsed:
                     left_options = compare(test_left_space, 0)
                 elif not test_left_space.collapsed:
@@ -117,6 +130,8 @@ def connecting(space_list):
             # For spaces that have another space at bottom border
             if j < radius - 1:
                 test_right_space = space_list[i][j + 1]
+                test_right_space.position = [i, j + 1]
+                print("test right:", test_right_space.position)
                 if test_right_space.collapsed:
                     right_options = compare(test_right_space, 2)
                 elif not test_right_space.collapsed:
@@ -125,6 +140,8 @@ def connecting(space_list):
                 right_options = options_list
             if i > 0:
                 test_up_space = space_list[i - 1][j]
+                test_up_space.position = [i - 1, j]
+                print("test up:", test_up_space.position)
                 if test_up_space.collapsed:
                     up_options = compare(test_up_space, 1)
                 elif not test_up_space.collapsed:
@@ -133,6 +150,8 @@ def connecting(space_list):
                 up_options = options_list
             if i < radius - 1:
                 test_down_space = space_list[i + 1][j]
+                test_down_space.position = [i + 1, j]
+                print("test down:", test_down_space.position)
                 if test_down_space.collapsed:
                     down_options = compare(test_down_space, 3)
                 elif not test_down_space.collapsed:
@@ -145,12 +164,18 @@ def connecting(space_list):
             space.entropy = len(space.options)
 
 
-#Can't call connecting since recursive, make sure this occurs after connecting() call in game function
+#collapsing is recursive with connecting() within
 def collapsing(space_list):
     connecting(space_list)
-    randi = random.randint(0, radius - 1)
-    randj = random.randint(0, radius - 1)
-    randk = random.randint(0, radius - 1)
+    global init_collapsed
+    if not init_collapsed:
+        randi = random.randint(0, radius - 1)
+        randj = random.randint(0, radius - 1)
+        randk = random.randint(0, radius - 1)
+        space_list[randi][randj].type = randk
+        space_list[randi][randj].collapsed = True
+        space_list[randi][randj].entropy = -1
+        init_collapsed = True
     entropy_list = [[len(options_list)] * radius] * radius
 #    for space_row_index in range(len(space_list)):
 #        for space in space_list[space_row_index]:
@@ -166,13 +191,16 @@ def collapsing(space_list):
             space = space_list[i][j]
             space.position = [i, j]
             if space.collapsed:
-                entropy_list[i][j] = 5
+                entropy_list[i][j] = -1
                 continue
             if not space.collapsed:
                 entropy_list[i][j] = space.entropy
                 entropy_count += 1
     for i in range(radius):
         for j in range(radius):
+            space = space_list[i][j]
+            if space.collapsed:
+                continue
             entropy = entropy_list[i][j]
             if entropy < min_entropy[0]:
                 min_entropy[0] = entropy
@@ -194,7 +222,6 @@ def collapsing(space_list):
         collapse_space = space_list[min_entropy[1]][min_entropy[2]]
     if len(collapse_space.options) > 1:
         pick = random.randint(0, len(collapse_space.options) - 1)
-        print(pick)
         collapse_tile = options_list[pick]
     elif len(collapse_space.options) == 0:
         restart()
@@ -223,7 +250,6 @@ def setup():
     screen.fill((255, 255, 255))
 
 
-running = True
 while running:
     setup()
     for event in pygame.event.get():
@@ -232,19 +258,22 @@ while running:
                 running = False
         elif event.type == QUIT:
             running = False
-    _space_list = []
-    for a in range(radius):
-        _space_list.append([Space(a * b) for b in range(radius)])
+
 
 #    _space_list = [[Space()] * radius] * radius
-    collapsing(_space_list)
+    if not collapsed:
+        _space_list = []
+        for a in range(radius):
+            _space_list.append([Space(a * b) for b in range(radius)])
+        collapsing(_space_list)
+        collapsed = True
 
     tileset = [["tile%d" % x for x in range(radius)] for x in range(radius)]
     for index in range(len(tileset)):
         for tile in tileset[index]:
             tile_index = tileset[index].index(tile)
-            tile = Tile(_space_list[index][tile_index].type)
-            tile_center = tile_centering()[index][tile_index]
+            tile = Tile(_space_list[tile_index][index].type)
+            tile_center = tile_centering()[tile_index][index]
             tile.position(tile_center)
             tile.show()
     pygame.display.flip()

@@ -28,19 +28,14 @@ options_list = [BLANK, LEFT, UP, RIGHT, DOWN]
 
 
 class Space(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, number):
         super(Space, self).__init__()
         self.type = None
         self.collapsed = False
         self.options = []
         self.position = []
         self.entropy = None
-
-    def typing(self, tile_type):
-        self.type = tile_type
-
-    def entropy_init(self):
-        self.entropy = len(self.options)
+        self.number = number
 
 
 tile_type_dict = {
@@ -93,7 +88,7 @@ def compare(_tile: Space, side_num):
     compatible_list = []
     for i in range(len(options_list)):
         #value is the 0 or 1 value of the input (collapsed) tile side
-        value = values[side_num]
+        value = values[side_num - 1]
         compare_tile = options_list[i]
         compare_values = tile_type_dict[compare_tile]
         compare_value = compare_values[compare_num]
@@ -103,6 +98,9 @@ def compare(_tile: Space, side_num):
 
 
 def connecting(space_list):
+    space_list[0][0].type = 0
+    space_list[0][0].collapsed = True
+
     for i in range(radius):
         for j in range(radius):
             space = space_list[i][j]
@@ -111,7 +109,7 @@ def connecting(space_list):
             if j > 0:
                 test_left_space = space_list[i][j - 1]
                 if test_left_space.collapsed:
-                    left_options = compare(test_left_space, LEFT)
+                    left_options = compare(test_left_space, 0)
                 elif not test_left_space.collapsed:
                     left_options = options_list
             else:
@@ -120,7 +118,7 @@ def connecting(space_list):
             if j < radius - 1:
                 test_right_space = space_list[i][j + 1]
                 if test_right_space.collapsed:
-                    right_options = compare(test_right_space, RIGHT)
+                    right_options = compare(test_right_space, 2)
                 elif not test_right_space.collapsed:
                     right_options = options_list
             else:
@@ -128,7 +126,7 @@ def connecting(space_list):
             if i > 0:
                 test_up_space = space_list[i - 1][j]
                 if test_up_space.collapsed:
-                    up_options = compare(test_up_space, UP)
+                    up_options = compare(test_up_space, 1)
                 elif not test_up_space.collapsed:
                     up_options = options_list
             else:
@@ -136,7 +134,7 @@ def connecting(space_list):
             if i < radius - 1:
                 test_down_space = space_list[i + 1][j]
                 if test_down_space.collapsed:
-                    down_options = compare(test_down_space, DOWN)
+                    down_options = compare(test_down_space, 3)
                 elif not test_down_space.collapsed:
                     down_options = options_list
             else:
@@ -144,20 +142,20 @@ def connecting(space_list):
             for k in range(5):
                 if k in (left_options and right_options and up_options and down_options):
                     space.options.append(k)
+            space.entropy = len(space.options)
 
 
 #Can't call connecting since recursive, make sure this occurs after connecting() call in game function
 def collapsing(space_list):
+    connecting(space_list)
     randi = random.randint(0, radius - 1)
     randj = random.randint(0, radius - 1)
     randk = random.randint(0, radius - 1)
-    space_list[0][0].type = 1
-    space_list[0][0].collapsed = True
     entropy_list = [[len(options_list)] * radius] * radius
-    for space_row_index in range(len(space_list)):
-        for space in space_list[space_row_index]:
-            space_index = space_list[space_row_index].index(space)
-            space.entropy_init()
+#    for space_row_index in range(len(space_list)):
+#        for space in space_list[space_row_index]:
+#            space_index = space_list[space_row_index].index(space)
+#            space.entropy_init()
     min_entropy = [5, 0, 1]
     multiple_min_entropy_list = []
     multiple_min_entropy_bool = False
@@ -166,13 +164,13 @@ def collapsing(space_list):
     for i in range(radius):
         for j in range(radius):
             space = space_list[i][j]
+            space.position = [i, j]
             if space.collapsed:
-                collapsed_count += 1
+                entropy_list[i][j] = 5
                 continue
-            else:
+            if not space.collapsed:
                 entropy_list[i][j] = space.entropy
                 entropy_count += 1
-                print(entropy_count)
     for i in range(radius):
         for j in range(radius):
             entropy = entropy_list[i][j]
@@ -196,6 +194,7 @@ def collapsing(space_list):
         collapse_space = space_list[min_entropy[1]][min_entropy[2]]
     if len(collapse_space.options) > 1:
         pick = random.randint(0, len(collapse_space.options) - 1)
+        print(pick)
         collapse_tile = options_list[pick]
     elif len(collapse_space.options) == 0:
         restart()
@@ -233,8 +232,11 @@ while running:
                 running = False
         elif event.type == QUIT:
             running = False
-    _space_list = [[Space()] * radius] * radius
-    connecting(_space_list)
+    _space_list = []
+    for a in range(radius):
+        _space_list.append([Space(a * b) for b in range(radius)])
+
+#    _space_list = [[Space()] * radius] * radius
     collapsing(_space_list)
 
     tileset = [["tile%d" % x for x in range(radius)] for x in range(radius)]

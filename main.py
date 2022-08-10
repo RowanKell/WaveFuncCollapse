@@ -97,14 +97,10 @@ def compare(_tile: Space, side_num):
     compatible_list = []
     for i in range(len(options_list)):
         #value is the 0 or 1 value of the input (collapsed) tile side
-        print("test tile: ", i)
-        print("side number", side_num, "compare num: ", compare_num)
         value = values[compare_num]
-        print("value (of opposite side on collapsed tile): ", value)
         compare_tile = options_list[i]
         compare_values = tile_type_dict[compare_tile]
         compare_value = compare_values[side_num]
-        print("compare value (for loop): ", compare_value)
         if value == compare_value:
             print("creating option to use tile num: ", i)
             compatible_list.append(compare_tile)
@@ -260,13 +256,14 @@ def collapsing(space_list):
         print("min entropy: ", min_entropy[0])
     if len(collapse_space.options) > 1:
         pick = random.randint(0, len(collapse_space.options) - 1)
-        collapse_tile = options_list[pick]
+        collapse_tile = collapse_space.options[pick]
     elif len(collapse_space.options) == 0:
         restart()
     else:
         collapse_tile = options_list[collapse_space.options[0]]
     collapse_space.collapsed = True
     collapse_space.type = collapse_tile
+    print("Collapsed to tile: ", collapse_space.type)
     all_collapsed = True
     for i in range(radius):
         for j in range(radius):

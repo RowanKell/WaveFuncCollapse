@@ -16,7 +16,7 @@ global screen
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 #Values for adjusting how many tiles we want on screen
-radius = 20
+radius = 10
 BLANK = 0
 LEFT = 1
 UP = 2
@@ -279,10 +279,12 @@ while running:
 
 
 #    _space_list = [[Space()] * radius] * radius
-    _space_list = []
-    for a in range(radius):
-        _space_list.append([Space(a * b) for b in range(radius)])
-    collapsing(_space_list)
+    if not collapsed:
+        _space_list = []
+        for a in range(radius):
+            _space_list.append([Space(a * b) for b in range(radius)])
+        collapsing(_space_list)
+        collapsed = True
 
     tileset = [["tile%d" % x for x in range(radius)] for x in range(radius)]
     for index in range(len(tileset)):

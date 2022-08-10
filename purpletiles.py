@@ -21,7 +21,7 @@ global screen
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 #Values for adjusting how many tiles we want on screen
-radius = 3
+radius = 2
 
 #from main.py for other tile set
 #BLANK = 0
@@ -285,16 +285,22 @@ def collapsing(space_list):
         if not all_collapsed:
             break
     global collapse_loop_count
-    collapse_loop_count +=1
+    collapse_loop_count += 1
 #    if all_collapsed or collapse_loop_count == 2:
 #        return
     if not all_collapsed:
-       collapsing(space_list)
+        collapsing(space_list)
+
+
+#fill screen with black
+def setup():
+    screen.fill((255, 255, 255))
+
 
 
 def restart():
     print("restarting")
-    restart_space_list = process()
+    restart_space_list = process(collapsed, True)
     display(restart_space_list)
 
 
@@ -309,10 +315,18 @@ def space_list_setup():
     return _space_list_setup
 
 
-def process():
-    _space_list = space_list_setup()
-    collapsing(_space_list)
-    return _space_list
+def process(collapsed_bool, _continue_type):
+    if not _continue_type:
+        if not collapsed_bool:
+            _space_list = space_list_setup()
+            collapsing(_space_list)
+            collapsed_bool = True
+            return _space_list
+    if continue_type:
+        _space_list = space_list_setup()
+        collapsing(_space_list)
+        return _space_list
+
 
 
 def display(_space_list):
@@ -338,7 +352,8 @@ while running:
 
 
 #    _space_list = [[Space()] * radius] * radius
-    loop_space_list = process()
+    continue_type = False
+    loop_space_list = process(collapsed, continue_type)
     display(loop_space_list)
 
 pygame.quit()

@@ -8,7 +8,7 @@ import pygame.freetype
 
 pygame.init()
 
-tile_image_list = ["Tiles/blank.png", "Tiles/up.png", "Tiles/right.png", "Tiles/down.png", "Tiles/left.png"]
+tile_image_list = ["Tiles/blank.png", "Tiles/left.png",  "Tiles/up.png", "Tiles/right.png", "Tiles/down.png"]
 
 screen_width = 800
 screen_height = 600
@@ -91,17 +91,24 @@ def restart():
 #side_num tells which side is being looked at (0 is left for instance)
 def compare(_tile: Space, side_num):
     tile_type = _tile.type
+    print("compare function input type: ", tile_type)
     values = tile_type_dict[tile_type]
     compare_num = (side_num + 2) % 4
     compatible_list = []
     for i in range(len(options_list)):
         #value is the 0 or 1 value of the input (collapsed) tile side
-        value = values[side_num]
+        print("test tile: ", i)
+        print("side number", side_num, "compare num: ", compare_num)
+        value = values[compare_num]
+        print("value (of opposite side on collapsed tile): ", value)
         compare_tile = options_list[i]
         compare_values = tile_type_dict[compare_tile]
-        compare_value = compare_values[compare_num]
+        compare_value = compare_values[side_num]
+        print("compare value (for loop): ", compare_value)
         if value == compare_value:
+            print("creating option to use tile num: ", i)
             compatible_list.append(compare_tile)
+    print("compatible list:", compatible_list)
     return compatible_list
 
 
@@ -115,13 +122,15 @@ def connecting(space_list):
         for j in range(radius):
             space = space_list[i][j]
             space.position = [i, j]
+            print("space position: ", space.position)
             #For spaces that have another space at top border
             if i > 0:
                 test_left_space = space_list[i - 1][j]
                 test_left_space.position = [i - 1, j]
                 if test_left_space.collapsed:
+                    print("comparing left")
                     left_options = compare(test_left_space, 0)
-                    print("left collapsed at: ", test_left_space.position)
+                    print("left collapsed at: ", test_left_space.position, "left_options: ", left_options)
                 elif not test_left_space.collapsed:
                     left_options = options_list
             else:
@@ -131,8 +140,9 @@ def connecting(space_list):
                 test_right_space = space_list[i + 1][j]
                 test_right_space.position = [i + 1, j]
                 if test_right_space.collapsed:
+                    print("comparing right")
                     right_options = compare(test_right_space, 2)
-                    print("right collapsed at: ", test_right_space.position)
+                    print("right collapsed at: ", test_right_space.position, "right_options: ", right_options)
                 elif not test_right_space.collapsed:
                     right_options = options_list
             else:
@@ -141,8 +151,9 @@ def connecting(space_list):
                 test_up_space = space_list[i][j - 1]
                 test_up_space.position = [i, j - 1]
                 if test_up_space.collapsed:
+                    print("comparing up")
                     up_options = compare(test_up_space, 1)
-                    print("up collapsed at: ", test_up_space.position)
+                    print("up collapsed at: ", test_up_space.position, "up_options: ", up_options)
                 elif not test_up_space.collapsed:
                     up_options = options_list
             else:
@@ -151,31 +162,49 @@ def connecting(space_list):
                 test_down_space = space_list[i][j + 1]
                 test_down_space.position = [i, j + 1]
                 if test_down_space.collapsed:
+                    print("comparing down")
                     down_options = compare(test_down_space, 3)
-                    print("down collapsed at: ", test_down_space.position)
+                    print("down collapsed at: ", test_down_space.position, "down_options: ", down_options)
                 elif not test_down_space.collapsed:
                     down_options = options_list
             else:
                 down_options = options_list
+
+#            for k in range(5):
+#                if k in (left_options and right_options and up_options and down_options):
+#                    space.options.append(k)
             for k in range(5):
-                if k in (left_options and right_options and up_options and down_options):
+                left_count = False
+                up_count = False
+                right_count = False
+                down_count = False
+                if left_options.count(k) > 0:
+                    left_count = True
+                if up_options.count(k) > 0:
+                    up_count = True
+                if right_options.count(k) > 0:
+                    right_count = True
+                if down_options.count(k) > 0:
+                    down_count = True
+                if left_count and up_count and right_count and down_count:
                     space.options.append(k)
+
             space.entropy = len(space.options)
 
 
 #collapsing is recursive with connecting() within
 def collapsing(space_list):
-    connecting(space_list)
     global init_collapsed
     if not init_collapsed:
         randi = random.randint(0, radius - 1)
         randj = random.randint(0, radius - 1)
-        randk = random.randint(0, radius - 1)
-        print("intial: ", randi, ", ", randj)
+        randk = random.randint(0, len(options_list) - 1)
+        print("intial: ", randi, ", ", randj, "tile: ", randk)
         space_list[randi][randj].type = randk
         space_list[randi][randj].collapsed = True
         space_list[randi][randj].entropy = -1
         init_collapsed = True
+    connecting(space_list)
     entropy_list = []
     for i in range(radius):
         entropy_list.append([])
@@ -218,12 +247,12 @@ def collapsing(space_list):
                 multiple_min_entropy_bool = True
             elif entropy > min_entropy[0]:
                 continue
-    print(entropy_list)
+    print("entropy list: ", entropy_list)
     if multiple_min_entropy_bool:
         min_amount = len(multiple_min_entropy_list)
         pick = random.randint(0, min_amount - 1)
         collapse_space = space_list[multiple_min_entropy_list[pick][0]][multiple_min_entropy_list[pick][1]]
-        print("position: ", multiple_min_entropy_list[pick][0], ", ", multiple_min_entropy_list[pick][1], "options: ", collapse_space.options)
+        print("pick position: ", multiple_min_entropy_list[pick][0], ", ", multiple_min_entropy_list[pick][1], "pick options: ", collapse_space.options)
         print("min entropy: ", min_entropy[0])
     else:
         collapse_space = space_list[min_entropy[1]][min_entropy[2]]

@@ -8,7 +8,12 @@ import pygame.freetype
 
 pygame.init()
 
-tile_image_list = ["Tiles/blank.png", "Tiles/left.png",  "Tiles/up.png", "Tiles/right.png", "Tiles/down.png"]
+tile_image_list = ["NewTiles/DarkPurp.png", "NewTiles/LightPurp.png", "NewTiles/DoubleSkinny.png",
+                   "NewTiles/SingleSkinny.png", "NewTiles/BluePurp.png", "NewTiles/BlueCrossLightPurp.png",
+                   "NewTiles/PurpCross.png", "NewTiles/BlueBluePurp.png", "NewTiles/LightPurpPurpPurp.png",
+#                   "NewTiles/DarkPurpCorner.png", "NewTiles/DarkBluePurpConnect.png",
+                   "NewTiles/BlueBlueBlue.png",
+                   "NewTiles/BluePurpBlue.png"]
 
 screen_width = 1200
 screen_height = 1000
@@ -16,15 +21,47 @@ global screen
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 #Values for adjusting how many tiles we want on screen
-radius = 20
-BLANK = 0
-LEFT = 1
-UP = 2
-RIGHT = 3
-DOWN = 4
+radius = 3
 
+#from main.py for other tile set
+#BLANK = 0
+#LEFT = 1
+#UP = 2
+#RIGHT = 3
+#DOWN = 4
 
-options_list = [0, 1, 2, 3, 4]
+#options_list = [0, 1, 2, 3, 4]
+
+#tile_type_dict = {
+#        0: [0, 0, 0, 0],
+#        1: [1, 1, 0, 1],
+#        2: [1, 1, 1, 0],
+#        3: [0, 1, 1, 1],
+#        4: [1, 0, 1, 1]
+#        }
+
+#For purple tileset
+
+options_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+tile_type_dict = {
+    0: [0, 0, 0, 0],
+    1: [1, 1, 1, 1],
+    2: [4, 4, 4, 4],
+    3: [1, 4, 4, 1],
+    4: [1, 1, 2, 1],
+    5: [2, 3, 2, 3],
+    6: [2, 2, 2, 3],
+    7: [1, 3, 1, 2],
+    8: [2, 1, 2, 1],
+    9: [3, 1, 3, 1],
+    10: [2, 1, 2, 1]
+#removing corner and connect ones
+#    9: [5, 5, 1, 1],
+#    10: [0, 5, 2, 5],
+#    11: [3, 1, 3, 1],
+#    12: [2, 1, 2, 1],
+}
 collapsed = False
 init_collapsed = False
 running = True
@@ -43,13 +80,7 @@ class Space(pygame.sprite.Sprite):
         self.number = number
 
 
-tile_type_dict = {
-        0: [0, 0, 0, 0],
-        1: [1, 1, 0, 1],
-        2: [1, 1, 1, 0],
-        3: [0, 1, 1, 1],
-        4: [1, 0, 1, 1]
-        }
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, num):
         super(Tile, self).__init__()
@@ -83,8 +114,6 @@ def tile_centering():
     return dimensions
 
 
-def restart():
-    pygame.quit()
 #add code that restarts the program so I can call this in collapse function in case any spaces have no options
 
 
@@ -263,9 +292,39 @@ def collapsing(space_list):
        collapsing(space_list)
 
 
+def restart():
+    print("restarting")
+    restart_space_list = process()
+    display(restart_space_list)
+
+
 #fill screen with black
 def setup():
     screen.fill((255, 255, 255))
+
+def space_list_setup():
+    _space_list_setup = []
+    for a in range(radius):
+        _space_list_setup.append([Space(a * b) for b in range(radius)])
+    return _space_list_setup
+
+
+def process():
+    _space_list = space_list_setup()
+    collapsing(_space_list)
+    return _space_list
+
+
+def display(_space_list):
+    tileset = [["tile%d" % x for x in range(radius)] for x in range(radius)]
+    for index in range(len(tileset)):
+        for tile in tileset[index]:
+            tile_index = tileset[index].index(tile)
+            tile = Tile(_space_list[tile_index][index].type)
+            tile_center = tile_centering()[tile_index][index]
+            tile.position(tile_center)
+            tile.show()
+    pygame.display.flip()
 
 
 while running:
@@ -279,18 +338,7 @@ while running:
 
 
 #    _space_list = [[Space()] * radius] * radius
-    _space_list = []
-    for a in range(radius):
-        _space_list.append([Space(a * b) for b in range(radius)])
-    collapsing(_space_list)
+    loop_space_list = process()
+    display(loop_space_list)
 
-    tileset = [["tile%d" % x for x in range(radius)] for x in range(radius)]
-    for index in range(len(tileset)):
-        for tile in tileset[index]:
-            tile_index = tileset[index].index(tile)
-            tile = Tile(_space_list[tile_index][index].type)
-            tile_center = tile_centering()[tile_index][index]
-            tile.position(tile_center)
-            tile.show()
-    pygame.display.flip()
 pygame.quit()
